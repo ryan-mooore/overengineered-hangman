@@ -9,6 +9,7 @@ from typing import Callable, List, Optional
 
 
 class HangmanWord:
+
     """
     Represents the word to guess in a game of Hangman.
 
@@ -19,6 +20,7 @@ class HangmanWord:
         list of HangmanChar subclass instances that forms the word
     """
     class HangmanChar:
+        
         """
         Represents one character in the word in a game of Hangman.
         Can be guessable (alpha char) or non-guessable.
@@ -57,9 +59,11 @@ class HangmanWord:
                 return self.char
 
         def __str__(self) -> str:
+            """actual char"""
             return self.char
 
         def __repr__(self) -> str:
+            """string representation of class instance including char"""
             return f"{self.__class__!r}: {self!s}"
 
     def __init__(self, word: str) -> None:
