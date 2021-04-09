@@ -9,8 +9,8 @@ from typing import Callable, List, Optional
 
 
 class HangmanWord:
-
     """
+
     Represents the word to guess in a game of Hangman.
 
 
@@ -20,8 +20,8 @@ class HangmanWord:
         list of HangmanChar subclass instances that forms the word
     """
     class HangmanChar:
-        
         """
+
         Represents one character in the word in a game of Hangman.
         Can be guessable (alpha char) or non-guessable.
 
@@ -59,11 +59,11 @@ class HangmanWord:
                 return self.char
 
         def __str__(self) -> str:
-            """actual char"""
+            """Returns the actual char of the class instance."""
             return self.char
 
         def __repr__(self) -> str:
-            """string representation of class instance including char"""
+            """Returns a string representation of class instance."""
             return f"{self.__class__!r}: {self!s}"
 
     def __init__(self, word: str) -> None:
@@ -90,7 +90,7 @@ class HangmanWord:
             lose_life_on_duplicate_guess=False,
             words_json="words.json"
         )
-            config namespace object containing settings for this game 
+            config namespace object containing settings for this game
         """
 
         words = cls._load_words(config).words
@@ -119,9 +119,11 @@ class HangmanWord:
         return [char.char for char in self.word]
 
     def __str__(self) -> str:
+        """Returns string as joined array of chars."""
         return ''.join(self.get_chars())
 
     def __repr__(self) -> str:
+        """Returns a string representation of class instance."""
         return f"{self.__class__!r}: {self!s}"
 
     def display(self) -> str:
@@ -137,6 +139,7 @@ class HangmanWord:
 
 class Guess:
     """
+
     Represents a guessed character in the game.
 
 
@@ -170,9 +173,11 @@ class Guess:
         return self.correct
 
     def __str__(self) -> str:
+        """Returns the actual char of the class instance."""
         return self.char
 
     def __repr__(self) -> str:
+        """Returns a string representation of class instance."""
         return f"{'correct' if self.correct else 'incorrect'} {self.__class__!r} of {self!s}"
 
 
@@ -253,6 +258,14 @@ class Game:
         print("the word was:")
         print(' '.join(str(self.word)))
         print(f"you {'won' if won else 'lost'}")
+    
+    def __str__(self) -> str:
+        """Returns a string instead of the instance."""
+        return "Hangman Game Instance"
+
+    def __repr__(self) -> str:
+        """Returns a string representation of class instance, including attributes."""
+        return f"{self.__class__.__name__} word:{self.word!r} guesses:{self.guesses!r}"
 
 
 if __name__ == "__main__":
