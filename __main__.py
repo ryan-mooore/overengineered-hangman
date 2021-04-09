@@ -32,7 +32,7 @@ class HangmanWord:
             string representation of the character
         guessed : bool
             whether the player has guessed this character correctly yet
-        
+
         Properties
         ----------
         guessable : bool
