@@ -258,7 +258,7 @@ class Game:
         print("the word was:")
         print(' '.join(str(self.word)))
         print(f"you {'won' if won else 'lost'}")
-    
+
     def __str__(self) -> str:
         """Returns a string instead of the instance."""
         return "Hangman Game Instance"
