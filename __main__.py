@@ -9,8 +9,40 @@ from typing import Callable, List, Optional
 
 
 class HangmanWord:
+    """
+    Represents the word to guess in a game of Hangman.
+
+
+    Attributes
+    ----------
+    word : List[HangmanWord.HangmanChar]
+        list of HangmanChar subclass instances that forms the word
+    """
     class HangmanChar:
+        """
+        Represents one character in the word in a game of Hangman.
+        Can be guessable (alpha char) or non-guessable.
+
+
+        Attributes
+        ----------
+        char : str
+            string representation of the character
+        guessed : bool
+            whether the player has guessed this character correctly yet
+        
+        Properties
+        ----------
+        guessable : bool
+            represents whether the char is and alpha char and thus can be guessed
+        """
         def __init__(self, char: str) -> None:
+            """
+            Parameters
+            ----------
+            char : str
+                actual character which will become the string representation
+            """
             self.char: str = char
             self.guessed: bool = False
 
@@ -31,10 +63,32 @@ class HangmanWord:
             return f"{self.__class__!r}: {self!s}"
 
     def __init__(self, word: str) -> None:
-        self.word: list[HangmanWord.HangmanChar] = [self.HangmanChar(char) for char in word]
+        """
+        Parameters
+        ----------
+        word : str
+            actual word which will become the string representation
+        """
+        self.word: List[HangmanWord.HangmanChar] = [self.HangmanChar(char) for char in word]
 
     @classmethod
     def from_config(cls, config: Namespace) -> HangmanWord:
+        """
+        Creates a HangmanWord instance randomly from the config settings
+
+        Parameters
+        ----------
+        config : Namespace(
+            difficulty=20000,
+            selection_range=400,
+            use_punctuated=False,
+            lives=10,
+            lose_life_on_duplicate_guess=False,
+            words_json="words.json"
+        )
+            config namespace object containing settings for this game 
+        """
+
         words = cls._load_words(config).words
 
         choices: List[Namespace] = sorted(
@@ -78,7 +132,23 @@ class HangmanWord:
 
 
 class Guess:
+    """
+    Represents a guessed character in the game.
+
+
+    Attributes
+    ----------
+    char : str
+        string representation of the character
+    correct : bool
+        whether the character is in the word or not
+    """
     def __init__(self, char: str) -> None:
+        """
+        Parameters
+        char : str
+            actual character which will become the string representation
+        """
         self.char: str = char
         self.correct: Optional[bool] = None
 
@@ -103,13 +173,41 @@ class Guess:
 
 
 class Game:
+    """
+    Represents a game of hangman.
+
+
+    Attributes
+    ----------
+    config : SimpleNamespace
+        contains settings related to the game in SimpleNamespace format
+    word : HangmanWord
+        the HangmanWord class instance being guessed in this game
+    guesses : List[Guess]
+        contains all guess history in list format
+    lives : int
+        how many lives the player has left in the current game
+    """
     clear: Callable[[], int] = lambda: system('cls' if name == 'nt' else 'clear')
 
     def __init__(self, config: Namespace) -> None:
+        """
+        Parameters
+        ----------
+        config : Namespace(
+            difficulty=20000,
+            selection_range=400,
+            use_punctuated=False,
+            lives=10,
+            lose_life_on_duplicate_guess=False,
+            words_json="words.json"
+        )
+            config namespace object containing settings for this game
+        """
         self.config = config
 
         self.word = HangmanWord.from_config(self.config)
-        self.guesses: List = []
+        self.guesses: List[Guess] = []
         self.lives = self.config.lives
 
     def turn(self) -> Optional[bool]:
@@ -128,7 +226,8 @@ class Game:
         self.guesses.append(guess)
         return None
 
-    def get_guess(self) -> Guess:
+    @staticmethod
+    def get_guess() -> Guess:
         while True:
             char: str = input("guess char: ")
             if char in ascii_lowercase and char:

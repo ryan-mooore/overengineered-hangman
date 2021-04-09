@@ -2,9 +2,9 @@
     "cSpell.words": [
         "isalpha"
     ],
-    "python.linting.mypyEnabled": true,
+    "python.linting.mypyEnabled": false,
     "python.linting.enabled": true,
-    "python.linting.pycodestyleEnabled": false,
+    "python.linting.pycodestyleEnabled": true,
     "python.linting.banditEnabled": false,
     "python.linting.pydocstyleEnabled": false,
     "python.linting.flake8Enabled": false,
