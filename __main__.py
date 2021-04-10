@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
-import random
-from os import path, system, name
+from random import choice
+from collections import namedtuple
+from os import name, path, system
 from string import ascii_lowercase
-from types import SimpleNamespace as Namespace
-from typing import Callable, List, Optional
+from types import SimpleNamespace
+from typing import Callable, List, NamedTuple, Optional
 
 
 class HangmanWord:
@@ -76,13 +77,13 @@ class HangmanWord:
         self.word: List[HangmanWord.HangmanChar] = [self.HangmanChar(char) for char in word]
 
     @classmethod
-    def from_config(cls, config: Namespace) -> HangmanWord:
+    def from_config(cls, config: NamedTuple) -> HangmanWord:
         """
         Creates a HangmanWord instance randomly from the config settings
 
         Parameters
         ----------
-        config : Namespace(
+        config : NamedTuple(
             difficulty=20000,
             selection_range=400,
             use_punctuated=False,
@@ -90,29 +91,29 @@ class HangmanWord:
             lose_life_on_duplicate_guess=False,
             words_json="words.json"
         )
-            config namespace object containing settings for this game
+            config namedtuple containing settings for this game
         """
 
         words = cls._load_words(config).words
 
-        choices: List[Namespace] = sorted(
+        choices: List[SimpleNamespace] = sorted(
             words,
             key=lambda word: abs(word.frequency - config.difficulty)
         )[:config.selection_range]
 
         while True:
-            word: HangmanWord = cls(random.choice(choices).word)
+            word: HangmanWord = cls(choice(choices).word)
             if not config.use_punctuated and not str(word).isalpha():
                 continue
             break
         return word
 
     @staticmethod
-    def _load_words(config) -> Namespace:
+    def _load_words(config) -> SimpleNamespace:
         with open(path.join(path.dirname(__file__), config.words_json)) as words_json:
             return json.loads(
                 words_json.read(),
-                object_hook=lambda d: Namespace(**d)
+                object_hook=lambda d: SimpleNamespace(**d)
             )
 
     def get_chars(self) -> list[str]:
@@ -188,8 +189,8 @@ class Game:
 
     Attributes
     ----------
-    config : SimpleNamespace
-        contains settings related to the game in SimpleNamespace format
+    config : NamedTuple
+        contains settings related to the game in NamedTuple format
     word : HangmanWord
         the HangmanWord class instance being guessed in this game
     guesses : List[Guess]
@@ -198,12 +199,20 @@ class Game:
         how many lives the player has left in the current game
     """
     clear: Callable[[], int] = lambda: system('cls' if name == 'nt' else 'clear')
+    Config = namedtuple("Config", [
+        "difficulty",
+        "selection_range",
+        "use_punctuated",
+        "lives",
+        "lose_life_on_duplicate_guess",
+        "words_json"]
+    )
 
-    def __init__(self, config: Namespace) -> None:
+    def __init__(self, config: Game.Config) -> None:
         """
         Parameters
         ----------
-        config : Namespace(
+        config : NamedTuple(
             difficulty=20000,
             selection_range=400,
             use_punctuated=False,
@@ -211,7 +220,7 @@ class Game:
             lose_life_on_duplicate_guess=False,
             words_json="words.json"
         )
-            config namespace object containing settings for this game
+            config namedtuple object containing settings for this game
         """
         self.config = config
 
@@ -269,7 +278,7 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(Namespace(**{
+    game = Game(Game.Config(**{
         "difficulty": 20000,
         "selection_range": 400,
         "use_punctuated": False,
