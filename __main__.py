@@ -1,12 +1,20 @@
+"""
+A implementation of a game of hangman.
+
+15/4/21
+"""
+
 from __future__ import annotations
 
 import json
-from random import choice
 from collections import namedtuple
 from os import name, path, system
+from random import choice
 from string import ascii_lowercase
 from types import SimpleNamespace
-from typing import Callable, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, get_type_hints
+
+from yaml import full_load
 
 
 class HangmanWord:
@@ -14,18 +22,16 @@ class HangmanWord:
 
     Represents the word to guess in a game of Hangman.
 
-
     Attributes
     ----------
     word : List[HangmanWord.HangmanChar]
         list of HangmanChar subclass instances that forms the word
     """
+
     class HangmanChar:
         """
 
-        Represents one character in the word in a game of Hangman.
-        Can be guessable (alpha char) or non-guessable.
-
+        Represents one character in the word in a game of Hangman. Can be guessable (alpha char) or non-guessable.
 
         Attributes
         ----------
@@ -39,13 +45,9 @@ class HangmanWord:
         guessable : bool
             represents whether the char is and alpha char and thus can be guessed
         """
+    
         def __init__(self, char: str) -> None:
-            """
-            Parameters
-            ----------
-            char : str
-                actual character which will become the string representation
-            """
+
             self.char: str = char
             self.guessed: bool = False
 
@@ -60,71 +62,53 @@ class HangmanWord:
                 return self.char
 
         def __str__(self) -> str:
-            """Returns the actual char of the class instance."""
+            """Return the actual char of the class instance."""
             return self.char
 
         def __repr__(self) -> str:
-            """Returns a string representation of class instance."""
+            """Return a string representation of class instance."""
             return f"{self.__class__!r}: {self!s}"
 
     def __init__(self, word: str) -> None:
-        """
-        Parameters
-        ----------
-        word : str
-            actual word which will become the string representation
-        """
+
         self.word: List[HangmanWord.HangmanChar] = [self.HangmanChar(char) for char in word]
 
     @classmethod
     def from_config(cls, config: NamedTuple) -> HangmanWord:
-        """
-        Creates a HangmanWord instance randomly from the config settings
 
-        Parameters
-        ----------
-        config : NamedTuple(
-            difficulty=20000,
-            selection_range=400,
-            use_punctuated=False,
-            lives=10,
-            lose_life_on_duplicate_guess=False,
-            words_json="words.json"
-        )
-            config namedtuple containing settings for this game
-        """
+        words: List = Game._load_file(
+            "words.json",
+            lambda file: json.loads(
+                file.read(),
+                object_hook=lambda d: SimpleNamespace(**d)
+            )
+        ).words
 
-        words = cls._load_words(config).words
+
 
         choices: List[SimpleNamespace] = sorted(
             words,
-            key=lambda word: abs(word.frequency - config.difficulty)
-        )[:config.selection_range]
+            key=lambda word: abs(word.frequency - config["word frequency per million"])
+        )[:config["selection range"]]
 
         while True:
             word: HangmanWord = cls(choice(choices).word)
-            if not config.use_punctuated and not str(word).isalpha():
+            if not config["use words with punctuation"] and not str(word).isalpha():
                 continue
             break
         return word
 
-    @staticmethod
-    def _load_words(config) -> SimpleNamespace:
-        with open(path.join(path.dirname(__file__), config.words_json)) as words_json:
-            return json.loads(
-                words_json.read(),
-                object_hook=lambda d: SimpleNamespace(**d)
-            )
 
+    
     def get_chars(self) -> list[str]:
         return [char.char for char in self.word]
 
     def __str__(self) -> str:
-        """Returns string as joined array of chars."""
+        """Return string as joined array of chars."""
         return ''.join(self.get_chars())
 
     def __repr__(self) -> str:
-        """Returns a string representation of class instance."""
+        """Return a string representation of class instance."""
         return f"{self.__class__!r}: {self!s}"
 
     def display(self) -> str:
@@ -143,7 +127,6 @@ class Guess:
 
     Represents a guessed character in the game.
 
-
     Attributes
     ----------
     char : str
@@ -151,18 +134,14 @@ class Guess:
     correct : bool
         whether the character is in the word or not
     """
+    
     def __init__(self, char: str) -> None:
-        """
-        Parameters
-        char : str
-            actual character which will become the string representation
-        """
         self.char: str = char
         self.correct: Optional[bool] = None
 
     def guess(self, game: Game) -> Optional[bool]:
         if self.char in [guess.char for guess in game.guesses]:
-            self.correct = False if game.config.lose_life_on_duplicate_guess else None
+            self.correct = False if game.config["lose life on duplicate guess"] else None
         else:
             if self.char in game.word.get_chars():
                 self.correct = True
@@ -174,11 +153,11 @@ class Guess:
         return self.correct
 
     def __str__(self) -> str:
-        """Returns the actual char of the class instance."""
+        """Return the actual char of the class instance."""
         return self.char
 
     def __repr__(self) -> str:
-        """Returns a string representation of class instance."""
+        """Return a string representation of class instance."""
         return f"{'correct' if self.correct else 'incorrect'} {self.__class__!r} of {self!s}"
 
 
@@ -186,11 +165,10 @@ class Game:
     """
     Represents a game of hangman.
 
-
     Attributes
     ----------
-    config : NamedTuple
-        contains settings related to the game in NamedTuple format
+    config : Dict
+        contains settings related to the game in dictionary format
     word : HangmanWord
         the HangmanWord class instance being guessed in this game
     guesses : List[Guess]
@@ -198,35 +176,16 @@ class Game:
     lives : int
         how many lives the player has left in the current game
     """
-    clear: Callable[[], int] = lambda: system('cls' if name == 'nt' else 'clear')
-    Config = namedtuple("Config", [
-        "difficulty",
-        "selection_range",
-        "use_punctuated",
-        "lives",
-        "lose_life_on_duplicate_guess",
-        "words_json"]
-    )
 
-    def __init__(self, config: Game.Config) -> None:
-        """
-        Parameters
-        ----------
-        config : NamedTuple(
-            difficulty=20000,
-            selection_range=400,
-            use_punctuated=False,
-            lives=10,
-            lose_life_on_duplicate_guess=False,
-            words_json="words.json"
-        )
-            config namedtuple object containing settings for this game
-        """
+    clear: Callable[[], int] = lambda: system('cls' if name == 'nt' else 'clear')
+
+    def __init__(self, config: Dict) -> None:
+        
         self.config = config
 
         self.word = HangmanWord.from_config(self.config)
         self.guesses: List[Guess] = []
-        self.lives = self.config.lives
+        self.lives = self.config["lives"]
 
     def turn(self) -> Optional[bool]:
         self.paint_UI()
@@ -251,6 +210,11 @@ class Game:
             if char in ascii_lowercase and char:
                 return Guess(char)
 
+    @staticmethod
+    def _load_file(filename, hook) -> Any:
+        with open(path.join(path.dirname(__file__), filename)) as file:
+            return hook(file)
+
     def start(self) -> None:
         while True:
             if self.turn() is not None:
@@ -258,7 +222,7 @@ class Game:
 
     def paint_UI(self) -> None:
         self.__class__.clear()
-        print(f"{self.lives} / {self.config.lives}")
+        print(f"{self.lives} / {self.config['lives']}")
         print(self.word.display())
         print(', '.join([str(guess) for guess in self.guesses]))
 
@@ -269,21 +233,18 @@ class Game:
         print(f"you {'won' if won else 'lost'}")
 
     def __str__(self) -> str:
-        """Returns a string instead of the instance."""
+        """Return a string instead of the instance."""
         return "Hangman Game Instance"
 
     def __repr__(self) -> str:
-        """Returns a string representation of class instance, including attributes."""
+        """Return a string representation of class instance, including attributes."""
         return f"{self.__class__.__name__} word:{self.word!r} guesses:{self.guesses!r}"
 
 
 if __name__ == "__main__":
-    game = Game(Game.Config(**{
-        "difficulty": 20000,
-        "selection_range": 400,
-        "use_punctuated": False,
-        "lives": 10,
-        "lose_life_on_duplicate_guess": False,
-        "words_json": "words.json"
-    }))
+    game = Game(Game._load_file(
+        "settings.yml",
+        lambda file: full_load(file)
+        )
+    )
     game.start()

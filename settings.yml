@@ -1,0 +1,17 @@
+# approximate frequency for words in the english language to select for the game
+# the most common words in the english language appear about 1000 times per million
+# the hardest words in this database appear about 1 time per million
+word frequency per million: 50
+
+# size of pool of words to select from
+selection range: 50
+
+# whether to choose hyphenated words or contractions
+# punctuation will be shown at the beginning of the game
+use words with punctuation: yes
+
+# amount of wrong guesses allowed before game is lost
+lives: 10
+
+# whether a life will be lost if the user guesses the same letter for a second time
+lose life on duplicate guess: no
